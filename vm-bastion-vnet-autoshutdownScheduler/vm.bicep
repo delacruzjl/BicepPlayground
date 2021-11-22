@@ -6,6 +6,12 @@ param instance string
 param vmUser string
 param vmPassword string
 param subnetId string
+param spotVM bool = true
+@allowed([
+  'Delete'
+  'Deallocate'
+])
+param spotEvictionPolicy string = 'Delete'
 
 var nicName = 'nic-${projectName}-${environment}-${location}-${instance}'
 var nsgName = 'nsg-${projectName}-${environment}-${location}-${instance}'
@@ -16,8 +22,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-04-01' = {
   name: name
   location: location
   properties: {
-    priority: 'Spot'
-    evictionPolicy: 'Deallocate'
+    priority: spotVM ? 'Spot' : 'Regular'
+    evictionPolicy: spotEvictionPolicy
     billingProfile: {
       maxPrice: 30
     }

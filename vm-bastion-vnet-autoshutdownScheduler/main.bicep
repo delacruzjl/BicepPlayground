@@ -18,10 +18,11 @@ var subnets = [
   'Default' 
   'AzureBastionSubnet'
 ]
+var vnetAddress = '10.0'
 
 // resource group
 module rg 'resource-group.bicep' = {
-  name: 'resourceGroupDeploy'
+  name: 'ResourceGroup'
   params: {
     name: resourceGroupName
     location: location
@@ -31,15 +32,15 @@ module rg 'resource-group.bicep' = {
 // vnet with 2 subnets
 module vnet 'vnet.bicep' = {
   scope: resourceGroup(resourceGroupName)
-  name: 'DeployVNET'
+  name: 'VNET'
   params: {
     location: location
     name: vnetName
-    addressPrefix: '10.0.0.0/16'
+    addressPrefix: '${vnetAddress}.0.0/16'
     subnets: [for (item, i) in subnets: {
         name: item
         properties: {
-          addressPrefix: '10.0.${i + 1}.0/26'
+          addressPrefix: '${vnetAddress}.${i + 1}.0/26'
         }
       }]
   }
@@ -51,7 +52,7 @@ module vnet 'vnet.bicep' = {
 
 module vm 'vm.bicep' = {
   scope: resourceGroup(resourceGroupName)
-  name: 'VMDeploy'
+  name: 'VM'
   params: {
     name: vmName
     projectName: projectName
@@ -61,6 +62,8 @@ module vm 'vm.bicep' = {
     subnetId: vnet.outputs.info.subnets[0].id
     vmPassword: vmPassword
     vmUser: vmUser
+    spotVM: true
+    spotEvictionPolicy: 'Delete'
   }
   dependsOn: [
     rg
@@ -69,7 +72,7 @@ module vm 'vm.bicep' = {
 
 module scheduler 'vm-scheduler.bicep' = {
   scope: resourceGroup(resourceGroupName)
-  name: 'DeployAutoShutdown'
+  name: 'Auto-Shutdown@2000'
   params: {
     name: autoShutdownSchedule
     location: location
@@ -83,7 +86,7 @@ module scheduler 'vm-scheduler.bicep' = {
 
 module pip 'pip.bicep' = {
   scope: resourceGroup(resourceGroupName)
-  name: 'DeployPIP'
+  name: 'PIP'
   params: {
     location: location
     name: pipName
@@ -95,7 +98,7 @@ module pip 'pip.bicep' = {
 
 module bastion 'bastion.bicep' = {
   scope: resourceGroup(resourceGroupName)
-  name: 'DeployBastionHost'
+  name: 'BastionHost'
   params: {
     name: bastionHostName
     location: location
