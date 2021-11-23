@@ -72,7 +72,7 @@ module vm 'vm.bicep' = {
 
 module scheduler 'vm-scheduler.bicep' = {
   scope: resourceGroup(resourceGroupName)
-  name: 'Auto-Shutdown@2000'
+  name: 'Auto_Shutdown_2000hrs'
   params: {
     name: autoShutdownSchedule
     location: location
