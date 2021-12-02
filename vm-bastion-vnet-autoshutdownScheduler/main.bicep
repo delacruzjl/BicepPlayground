@@ -1,24 +1,25 @@
 targetScope = 'subscription'
 
 param location string
-param projectName string 
+param projectName string
 param environment string
 param instance string
 param vmUser string
 @secure()
 param vmPassword string
 
-var resourceGroupName =  'rg-${projectName}-${environment}-${location}-${instance}'
-var bastionHostName = 'bas-${projectName}-${environment}-${location}-${instance}'
+var resourceGroupName = 'rg-${projectName}-${environment}-${location}-${instance}'
 var pipName = 'pip-${projectName}-${environment}-${location}-${instance}'
 var vmName = 'vm-${projectName}-${environment}-${location}-${instance}'
 var autoShutdownSchedule = 'shutdown-computevm-${vmName}'
 var vnetName = 'vnet-${projectName}-${environment}-${location}-${instance}'
 var subnets = [
-  'Default' 
-  'AzureBastionSubnet'
+  'Default'
+  'GatewaySubnet'
 ]
 var vnetAddress = '10.0'
+var vpngName = 'vpng-${projectName}-${environment}-${location}-${instance}'
+// var bastionHostName = 'bas-${projectName}-${environment}-${location}-${instance}'
 
 // resource group
 module rg 'resource-group.bicep' = {
@@ -29,7 +30,7 @@ module rg 'resource-group.bicep' = {
   }
 }
 
-// vnet with 2 subnets
+// vnet with subnets
 module vnet 'vnet.bicep' = {
   scope: resourceGroup(resourceGroupName)
   name: 'VNET'
@@ -38,11 +39,11 @@ module vnet 'vnet.bicep' = {
     name: vnetName
     addressPrefix: '${vnetAddress}.0.0/16'
     subnets: [for (item, i) in subnets: {
-        name: item
-        properties: {
-          addressPrefix: '${vnetAddress}.${i + 1}.0/26'
-        }
-      }]
+      name: item
+      properties: {
+        addressPrefix: '${vnetAddress}.${i + 1}.0/26'
+      }
+    }]
   }
   dependsOn: [
     rg
@@ -62,8 +63,10 @@ module vm 'vm.bicep' = {
     subnetId: vnet.outputs.info.subnets[0].id
     vmPassword: vmPassword
     vmUser: vmUser
-    spotVM: true
-    spotEvictionPolicy: 'Delete'
+    vmSize: 'Standard_B2ms'
+    skuImage: '19h1-ent'
+    spotVM: false // true
+    // spotEvictionPolicy: 'Delete'
   }
   dependsOn: [
     rg
@@ -83,7 +86,6 @@ module scheduler 'vm-scheduler.bicep' = {
   }
 }
 
-
 module pip 'pip.bicep' = {
   scope: resourceGroup(resourceGroupName)
   name: 'PIP'
@@ -96,6 +98,16 @@ module pip 'pip.bicep' = {
   ]
 }
 
+module vpng 'vnet-gateway.bicep' = {
+  scope: resourceGroup(resourceGroupName)
+  name: 'VPN_Gateway'
+  params: {
+    name: vpngName
+    subnetId: vnet.outputs.info.subnets[1].id
+    pipId: pip.outputs.id
+  }
+}
+/*
 module bastion 'bastion.bicep' = {
   scope: resourceGroup(resourceGroupName)
   name: 'BastionHost'
@@ -106,5 +118,4 @@ module bastion 'bastion.bicep' = {
     subnetId:  vnet.outputs.info.subnets[1].id
   }
 }
-
-
+*/

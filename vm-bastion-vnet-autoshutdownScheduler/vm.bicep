@@ -1,6 +1,6 @@
 param name string
 param location string
-param projectName string 
+param projectName string
 param environment string
 param instance string
 param vmUser string
@@ -8,10 +8,20 @@ param vmPassword string
 param subnetId string
 param spotVM bool = true
 @allowed([
+  'Standard_B2ms'
+  'Standard_DS3_v2'
+])
+param vmSize string
+@allowed([
   'Delete'
   'Deallocate'
 ])
 param spotEvictionPolicy string = 'Delete'
+@allowed([
+  '20h1-pro-g2'
+  '19h1-ent'
+])
+param skuImage string
 
 var nicName = 'nic-${projectName}-${environment}-${location}-${instance}'
 var nsgName = 'nsg-${projectName}-${environment}-${location}-${instance}'
@@ -23,18 +33,18 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-04-01' = {
   location: location
   properties: {
     priority: spotVM ? 'Spot' : 'Regular'
-    evictionPolicy: spotEvictionPolicy
-    billingProfile: {
+    evictionPolicy: spotVM ? spotEvictionPolicy : null
+    billingProfile: spotVM ? {
       maxPrice: 30
-    }
+    } : null
     hardwareProfile: {
-      vmSize: 'Standard_DS3_v2'
+      vmSize: vmSize
     }
     storageProfile: {
       imageReference: {
         publisher: 'MicrosoftWindowsDesktop'
         offer: 'Windows-10'
-        sku: '20h1-pro-g2'
+        sku: skuImage
         version: 'latest'
       }
       osDisk: {
