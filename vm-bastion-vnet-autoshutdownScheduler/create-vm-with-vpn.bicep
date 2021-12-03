@@ -7,6 +7,7 @@ param instance string
 param vmUser string
 @secure()
 param vmPassword string
+param root_certificate string
 
 var resourceGroupName = 'rg-${projectName}-${environment}-${location}-${instance}'
 var pipName = 'pip-${projectName}-${environment}-${location}-${instance}'
@@ -19,7 +20,6 @@ var subnets = [
 ]
 var vnetAddress = '10.0'
 var vpngName = 'vpng-${projectName}-${environment}-${location}-${instance}'
-// var bastionHostName = 'bas-${projectName}-${environment}-${location}-${instance}'
 
 // resource group
 module rg 'resource-group.bicep' = {
@@ -105,17 +105,6 @@ module vpng 'vnet-gateway.bicep' = {
     name: vpngName
     subnetId: vnet.outputs.info.subnets[1].id
     pipId: pip.outputs.id
+    root_cert: root_certificate
   }
 }
-/*
-module bastion 'bastion.bicep' = {
-  scope: resourceGroup(resourceGroupName)
-  name: 'BastionHost'
-  params: {
-    name: bastionHostName
-    location: location
-    pipId: pip.outputs.id
-    subnetId:  vnet.outputs.info.subnets[1].id
-  }
-}
-*/
