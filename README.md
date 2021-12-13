@@ -33,6 +33,6 @@ Resources will be created following the Azure Naming convention here: https://do
 ```powershell
 az deployment sub create -n YourDeploymentName \
 --location ValidAzureRegion \
---template-file PathTo/main.bicep \
+--template-file PathTo/create-vm-with-bastion.bicep \
 --parameters @PathToParameters.json
 ```
