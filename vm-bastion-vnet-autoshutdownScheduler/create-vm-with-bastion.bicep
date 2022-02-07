@@ -15,7 +15,7 @@ var autoShutdownSchedule = 'shutdown-computevm-${vmName}'
 var vnetName = 'vnet-${projectName}-${environment}-${location}-${instance}'
 var subnets = [
   'Default'
-  'BastionHost'
+  'AzureBastionSubnet'
 ]
 var vnetAddress = '10.0'
 var bastionHostName = 'bas-${projectName}-${environment}-${location}-${instance}'
